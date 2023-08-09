@@ -1,0 +1,34 @@
+---
+- hosts: webservers
+  
+  vars:
+    dns: "1.1.1.1"
+
+  tasks:  
+  - name: Install required packages
+    become: true
+    package: 
+      name: 
+        - lm_sensors
+        - git
+      state: present
+      use: dnf
+
+  - name: Download Cherry
+    git:
+      repo: https://gitlab.com/slackermedia/bashcrawl.git
+      dest: /home/admin/bashcrawl
+
+  - name: Autostart nginx
+    become: true
+    ansible.builtin.systemd_service:
+      name: nginx      
+      enabled: true
+      state: "started"
+
+  - name: Open firewallD
+    become: true
+    ansible.posix.firewalld:
+      port: 80/tcp
+      state: "enabled"
+      permanent: true
