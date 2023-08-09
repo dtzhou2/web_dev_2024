@@ -51,8 +51,8 @@
     become: true
     ansible.builtin.copy:
       remote_src: yes
-      dest: "/var/www/cherry/"
-      src: "/tmp/cherry/"
+      dest: "/var/www/cherry"
+      src: "/tmp/cherry"
       owner: root
       setype: httpd_sys_rw_content_t
 
@@ -73,12 +73,12 @@
       recurse: true
       path: /var/www/cherry
 
-  # - name: Set SELinux contexts
-  #   become: true
-  #   community.general.sefcontext:
-  #     target: '/var/www/cherry(/.*)?'
-  #     setype: httpd_sys_rw_content_t
-  #     state: present  
+  - name: Set SELinux contexts
+    become: true
+    community.general.sefcontext:
+      target: '/var/www/cherry(/.*)?'
+      setype: httpd_sys_rw_content_t
+      state: present  
 
   - name: Open firewallD
     become: true
