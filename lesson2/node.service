@@ -1,0 +1,8 @@
+[Unit]
+Description = "Service that ensures that your web application will be deployed each boot"
+
+[Service]
+ExecStart = /usr/local/bin/serve -s build
+Restart = always
+User = **INSERT USER HERE**
+WorkingDirectory= 

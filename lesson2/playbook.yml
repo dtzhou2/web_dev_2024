@@ -1,0 +1,81 @@
+---
+- hosts: webservers
+  
+  vars:
+    dns: "1.1.1.1"
+
+  tasks:  
+  - name: Install nodeJS
+    become: true
+    package: 
+      name: 
+        - nodejs:18
+        - git
+        - nginx
+      state: present
+      use: dnf
+  - name: Download Cherry
+    git:
+      repo: https://github.com/open-source-at-illinois/cherry.git
+      dest: /var/www/cherry
+  - name: Create npm user
+    become: true
+    ansible.builtin.user:
+      name: npm
+      home: /var/www/cherry
+      password: '!'
+      state: present
+  - name: Set web directory permissions
+    become: true 
+    ansible.builtin.file:
+      group: npm
+      owner: npm
+      mode: 755
+      recurse: true
+      path: /var/www/cherry
+  - name: Set SELinux contexts
+    become: true
+    community.general.sefcontext:
+      target: '/var/www/cherry(/.*)?'
+      setype: httpd_sys_rw_content_t
+      state: present    
+  - name: Install npm dependencies
+    become: true
+    become_user: npm
+    community.general.npm:
+      ci: true
+      path: /var/www/cherry
+  - name: Build npm project
+    become: true
+    become_user: npm
+    command: npm run build
+    args:
+      chdir: /var/www/cherry
+  - name: Install npm dependencies pt2
+    become: true 
+    community.general.npm:
+      name: react-scripts
+  - name: Open firewallD
+    become: yes
+    ansible.posix.firewalld:
+      port: 
+        - 443
+        - 80
+      protocol: tcp
+      state: "enabled"
+      permanent: true
+  - name: Copy nginx config file
+    become: true
+    owner: root
+    ansible.builtin.copy:
+      dest: "/var/wwww/cherry/web/cherry.conf"
+      src: "cherry_template.j2"
+  - name: Autostart nginx
+    become: true
+    ansible.builtin.systemd_service:
+      name: nginx      
+      enabled: true
+      state: "started"
+
+
+sudo 
