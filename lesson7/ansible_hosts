@@ -1,0 +1,2 @@
+[buildah]
+$CONTAINER_NAME ansible_connection=buildah

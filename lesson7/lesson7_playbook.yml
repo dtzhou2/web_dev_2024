@@ -6,15 +6,12 @@
 
   tasks:  
   - name: Disable incorrect version of nodejs
-    become: true
     command: dnf module disable nodejs -y
 
   - name: Enable correct version of nodejs
-    become: true
-    command: dnf module enable nodejs:18 -y
+    command: dnf module enable nodejs:16 -y
 
   - name: Install nodeJS
-    become: true
     package: 
       name: 
         - nodejs
@@ -33,7 +30,6 @@
       path: /tmp/cherry/web
       
   - name: Install npm dependencies pt2
-    become: true
     community.general.npm:
       name: react-scripts
       global: true
@@ -43,8 +39,15 @@
     args:
       chdir: /tmp/cherry/web
 
+  - name: Create web directory
+    ansible.builtin.file:
+      path: "/var/www/cherry"
+      state: "directory"
+      owner: root
+      mode: 0755
+      setype: httpd_sys_rw_content_t
+
   - name: Move built project to prod folder
-    become: true
     ansible.builtin.copy:
       remote_src: yes
       dest: "/var/www/cherry"
@@ -52,47 +55,9 @@
       owner: root
       setype: httpd_sys_rw_content_t
 
-  - name: Create npm user
-    become: true
-    ansible.builtin.user:
-      name: npm
-      home: /var/www/cherry
-      password: '!'
-      state: present
-
-  - name: Set web directory permissions
-    become: true 
-    ansible.builtin.file:
-      group: npm
-      owner: npm
-      mode: 0755
-      recurse: true
-      path: /var/www/cherry
-
-  - name: Set SELinux contexts
-    become: true
-    community.general.sefcontext:
-      target: '/var/www/cherry(/.*)?'
-      setype: httpd_sys_rw_content_t
-      state: present  
-
-  - name: Open firewallD
-    become: true
-    ansible.posix.firewalld:
-      port: 80/tcp
-      state: "enabled"
-      permanent: true
-
   - name: Copy nginx config file
-    become: true
     ansible.builtin.copy:
       dest: "/etc/nginx/conf.d/cherry.conf"
       src: "cherry_template.j2"
       owner: root
 
-  - name: Autostart nginx
-    become: true
-    ansible.builtin.systemd_service:
-      name: nginx      
-      enabled: true
-      state: "started"
